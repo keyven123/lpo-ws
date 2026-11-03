@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\Admin\ClientController;
+use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\ServiceController;
 use App\Http\Controllers\Admin\TalentController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\TalentCvController;
@@ -80,6 +82,8 @@ Route::prefix('v1')->group(function () {
         ]);
     });
 
+    Route::get('services', [ServiceController::class, 'catalog']);
+
     Route::prefix('auth')->group(function () {
         Route::middleware('throttle:10,1')->group(function () {
             Route::post('candidate/register', [AuthController::class, 'registerCandidate']);
@@ -98,6 +102,8 @@ Route::prefix('v1')->group(function () {
     });
 
     Route::middleware(['auth:api', 'user.type:admin'])->prefix('admin')->group(function () {
+        Route::get('dashboard', [DashboardController::class, 'show']);
+
         Route::get('talents', [TalentController::class, 'index']);
         Route::post('talents', [TalentController::class, 'store']);
         Route::get('talents/{talent}', [TalentController::class, 'show'])->whereNumber('talent');
@@ -110,5 +116,11 @@ Route::prefix('v1')->group(function () {
         Route::get('clients/{client}', [ClientController::class, 'show'])->whereNumber('client');
         Route::put('clients/{client}', [ClientController::class, 'update'])->whereNumber('client');
         Route::patch('clients/{client}/status', [ClientController::class, 'updateStatus'])->whereNumber('client');
+
+        Route::get('services', [ServiceController::class, 'index']);
+        Route::post('services', [ServiceController::class, 'store']);
+        Route::get('services/{service}', [ServiceController::class, 'show'])->whereNumber('service');
+        Route::put('services/{service}', [ServiceController::class, 'update'])->whereNumber('service');
+        Route::delete('services/{service}', [ServiceController::class, 'destroy'])->whereNumber('service');
     });
 });

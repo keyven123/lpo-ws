@@ -35,6 +35,7 @@ class AccountOptions
         'Bookkeeping',
     ];
 
+    /** @deprecated Prefer ServiceCatalog / the services table. Kept for reference. */
     public const SERVICES = [
         'lead_generation',
         'prospect_research',

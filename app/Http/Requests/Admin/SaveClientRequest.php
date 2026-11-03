@@ -4,6 +4,7 @@ namespace App\Http\Requests\Admin;
 
 use App\Models\User;
 use App\Support\AccountOptions;
+use App\Support\ServiceCatalog;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
@@ -49,7 +50,7 @@ class SaveClientRequest extends FormRequest
                 : ['prohibited'],
 
             'services' => ['required', 'array', 'min:1'],
-            'services.*' => ['string', Rule::in(AccountOptions::SERVICES)],
+            'services.*' => ['string', ServiceCatalog::slugRule()],
             'message' => ['nullable', 'string', 'max:2000'],
             'lead_source' => ['nullable', Rule::in(AccountOptions::LEAD_SOURCES)],
 

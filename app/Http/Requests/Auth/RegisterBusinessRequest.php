@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Auth;
 
 use App\Support\AccountOptions;
+use App\Support\ServiceCatalog;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
@@ -34,7 +35,7 @@ class RegisterBusinessRequest extends FormRequest
             'phone' => ['nullable', 'string', 'max:50'],
             'password' => ['required', 'string', 'confirmed', Password::min(8)->letters()->numbers()],
             'services' => ['required', 'array', 'min:1'],
-            'services.*' => ['string', Rule::in(AccountOptions::SERVICES)],
+            'services.*' => ['string', ServiceCatalog::activeSlugRule()],
             'message' => ['nullable', 'string', 'max:2000'],
             'terms' => ['accepted'],
         ];
