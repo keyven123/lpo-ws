@@ -1,0 +1,76 @@
+# LPO. Add to /etc/caddy/Caddyfile (or import this file). Caddy gets and renews HTTPS certificates automatically.
+# Assumes PHP 8.4 FPM, the same as the intranet on this server.
+
+# API (Laravel)
+api.lpoph.com {
+	root * /srv/lpo/lpo-ws/public
+	encode zstd gzip
+
+	# CV uploads are limited to 5 MB by the app; leave headroom for the rest of the form.
+	request_body {
+		max_size 20MB
+	}
+
+	header {
+		X-Frame-Options "SAMEORIGIN"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Strict-Transport-Security "max-age=31536000"
+		-Server
+		-X-Powered-By
+	}
+
+	# Uploading a CV copies it to DigitalOcean Spaces during the request, so give PHP time.
+	php_fastcgi unix//run/php/php8.4-fpm.sock {
+		read_timeout 300s
+		write_timeout 300s
+	}
+	file_server {
+		hide .*
+	}
+
+	log {
+		output file /var/log/caddy/lpo-api.log {
+			roll_size 20MiB
+			roll_keep 5
+		}
+	}
+}
+
+# Web app (React SPA)
+lpoph.com {
+	root * /srv/lpo/lpo-core/dist
+	encode zstd gzip
+
+	header {
+		X-Frame-Options "SAMEORIGIN"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Strict-Transport-Security "max-age=31536000"
+		-Server
+	}
+
+	# Hashed build files never change; everything else (index.html) is always revalidated.
+	@assets path /assets/*
+	header @assets Cache-Control "public, max-age=31536000, immutable"
+	@app not path /assets/*
+	header @app Cache-Control "no-cache"
+
+	# Every app route is handled by the SPA.
+	try_files {path} /index.html
+	file_server {
+		hide .*
+	}
+
+	log {
+		output file /var/log/caddy/lpo-web.log {
+			roll_size 20MiB
+			roll_keep 5
+		}
+	}
+}
+
+# www.lpoph.com → lpoph.com. Needs a DNS record for www; delete this block if there isn't one.
+www.lpoph.com {
+	redir https://lpoph.com{uri} permanent
+}
