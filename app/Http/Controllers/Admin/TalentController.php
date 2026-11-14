@@ -168,7 +168,7 @@ class TalentController extends Controller
             return response()->json(['message' => 'This talent has not uploaded a CV yet.'], 404);
         }
 
-        return Storage::disk(CandidateProfile::CV_DISK)->download(
+        return Storage::disk(CandidateProfile::cvDisk())->download(
             $profile->cv_path,
             $profile->cv_original_name ?: 'cv',
         );

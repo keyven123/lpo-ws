@@ -1,0 +1,10 @@
+[Unit]
+Description=Run the LPO API scheduler every minute
+
+[Timer]
+OnCalendar=*-*-* *:*:00
+AccuracySec=1s
+Unit=lpo-ws-scheduler.service
+
+[Install]
+WantedBy=timers.target

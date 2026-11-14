@@ -1,0 +1,63 @@
+name: Test and deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: # "Run workflow" button for manual redeploys
+
+# Never run two deploys of this app at once; a newer push waits for the current one.
+concurrency:
+  group: deploy-lpo-ws
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, pdo_sqlite, intl, gd, zip, bcmath
+          coverage: none
+
+      - name: Cache Composer packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/composer/files
+          key: composer-${{ hashFiles('composer.lock') }}
+
+      - run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Prepare environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+          php artisan jwt:secret --force
+
+      - run: php artisan test
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-24.04
+    environment: production
+    steps:
+      - name: Set up SSH
+        env:
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+
+      - name: Deploy on the server
+        env:
+          DEPLOY_TARGET: ${{ secrets.DEPLOY_TARGET }} # e.g. deploy@your-server-ip
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}     # /srv/lpo/lpo-ws
+        run: ssh -i ~/.ssh/deploy_key -o BatchMode=yes "$DEPLOY_TARGET" "bash '$DEPLOY_PATH/scripts/deploy.sh'"

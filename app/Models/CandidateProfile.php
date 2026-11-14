@@ -15,8 +15,16 @@ class CandidateProfile extends Model
 
     public const STATUS_ACTIVE = 'active';
 
-    /** CVs are private: never served from the public disk. */
-    public const CV_DISK = 'local';
+    /**
+     * Disk CVs are stored on: the app's default disk (FILESYSTEM_DISK, e.g. "do" for DigitalOcean Spaces).
+     * CVs are private, so they never go on the public disk; that setting falls back to "local".
+     */
+    public static function cvDisk(): string
+    {
+        $disk = (string) config('filesystems.default', 'local');
+
+        return $disk === 'public' ? 'local' : $disk;
+    }
 
     protected $fillable = [
         'user_id',
@@ -58,20 +66,20 @@ class CandidateProfile extends Model
         $previous = $this->cv_path;
 
         $this->forceFill([
-            'cv_path' => $file->store('cvs', self::CV_DISK),
+            'cv_path' => $file->store('cvs', self::cvDisk()),
             'cv_original_name' => mb_substr($file->getClientOriginalName(), 0, 255),
             'cv_size' => $file->getSize(),
             'cv_uploaded_at' => now(),
         ])->save();
 
         if ($previous && $previous !== $this->cv_path) {
-            Storage::disk(self::CV_DISK)->delete($previous);
+            Storage::disk(self::cvDisk())->delete($previous);
         }
     }
 
     public function hasCv(): bool
     {
-        return $this->cv_path !== null && Storage::disk(self::CV_DISK)->exists($this->cv_path);
+        return $this->cv_path !== null && Storage::disk(self::cvDisk())->exists($this->cv_path);
     }
 
     /** Public CV metadata (no storage path). */

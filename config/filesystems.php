@@ -60,6 +60,27 @@ return [
             'report' => false,
         ],
 
+        // DigitalOcean Spaces (S3-compatible). Use with FILESYSTEM_DISK=do.
+        'do' => [
+            'driver' => 's3',
+            'key' => env('DO_SPACES_KEY'),
+            'secret' => env('DO_SPACES_SECRET'),
+            'region' => env('DO_SPACES_REGION') ?: 'sgp1',
+            'bucket' => env('DO_SPACES_BUCKET'),
+            // Accepts either the region endpoint or the Space's origin URL (https://<bucket>.<region>...); the SDK adds the bucket itself.
+            'endpoint' => preg_replace(
+                '#^(https?://)'.preg_quote((string) env('DO_SPACES_BUCKET'), '#').'\.#i',
+                '$1',
+                rtrim((string) (env('DO_SPACES_ENDPOINT') ?: 'https://'.(env('DO_SPACES_REGION') ?: 'sgp1').'.digitaloceanspaces.com'), '/'),
+            ),
+            'url' => env('DO_SPACES_URL') ?: null,
+            'root' => env('DO_SPACES_ROOT') ?: 'lpo',
+            'visibility' => 'private',
+            'use_path_style_endpoint' => false,
+            'throw' => true,
+            'report' => true,
+        ],
+
     ],
 
     /*

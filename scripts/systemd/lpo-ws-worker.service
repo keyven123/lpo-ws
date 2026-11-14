@@ -1,0 +1,22 @@
+# LPO API queue worker.
+# Deploys run `php artisan queue:restart`: the worker finishes its current job, exits, and systemd starts it on the new code.
+[Unit]
+Description=LPO API queue worker
+After=network-online.target mysql.service
+Wants=network-online.target
+
+[Service]
+User=www-data
+Group=www-data
+WorkingDirectory=/srv/lpo/lpo-ws
+ExecStart=/usr/bin/php artisan queue:work database --sleep=3 --tries=3 --backoff=10 --max-time=3600
+Restart=always
+RestartSec=5
+# Let a running job finish before a stop/restart kills it.
+TimeoutStopSec=300
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+
+[Install]
+WantedBy=multi-user.target

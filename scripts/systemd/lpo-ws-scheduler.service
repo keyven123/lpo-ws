@@ -1,0 +1,14 @@
+# LPO API scheduler: runs due tasks. Started every minute by lpo-ws-scheduler.timer.
+[Unit]
+Description=LPO API scheduler (php artisan schedule:run)
+After=network-online.target mysql.service
+
+[Service]
+Type=oneshot
+User=www-data
+Group=www-data
+WorkingDirectory=/srv/lpo/lpo-ws
+ExecStart=/usr/bin/php artisan schedule:run
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
